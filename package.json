@@ -1,0 +1,35 @@
+{
+  "name": "devkit-cli",
+  "version": "1.0.0",
+  "description": "A composable command-line toolkit for automating repetitive development workflows.",
+  "type": "module",
+  "author": {
+    "name": "Izzat A"
+  },
+  "bin": {
+    "devkit": "./bin/devkit"
+  },
+  "main": "dist/cli.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "dependencies": {
+    "zx": "^8.1.4",
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
