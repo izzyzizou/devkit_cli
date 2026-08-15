@@ -13,7 +13,7 @@ program
       "  devkit git:changed | devkit todo:find\n" +
       "  devkit git:changed | devkit filter '\\.ts$' | devkit exec 'eslint {}'",
   )
-  .version("0.1.0");
+  .version("1.0.0");
 
 registerAllCommands(program);
 

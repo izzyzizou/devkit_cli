@@ -37,6 +37,34 @@ npm run dev -- git:changed
 
 Run `devkit <command> --help` for full options.
 
+## Testing
+
+Tests run on [Vitest](https://vitest.dev), split into two layers:
+
+```bash
+npm test          # build + full suite (unit + integration)
+npm run test:unit # unit tests only, no build needed
+npm run test:watch
+```
+
+- **`tests/unit/`** — tests pure logic directly, no subprocess, no disk I/O.
+  e.g. `scanForTodos()` and the `printLines`/`printJson`/`logStatus` output
+  contract. These are the fast, comprehensive layer — new commands should
+  push their parsing/formatting logic into `src/lib/` specifically so it's
+  unit-testable like this instead of buried in a command's `.action()`.
+- **`tests/integration/`** — spawns the *actual built CLI* (`node
+  dist/cli.js ...`) as a real subprocess against a throwaway git repo fixture,
+  piping one command's stdout into another's stdin exactly like a user would
+  on the command line. This is what guarantees composability doesn't silently
+  break — e.g. `git:changed | todo:find`, `git:changed | filter | exec`.
+  `npm test` builds first (`pretest` script) so these always run against
+  current code, not a stale `dist/`.
+
+Adding a command? Pair it with:
+1. A unit test for any parsing/formatting you pulled into `src/lib/`.
+2. One integration test proving it composes with at least one other command
+   via a real pipe.
+
 ## Writing your own command
 
 Commands are self-contained modules under `src/commands/`. The pattern:

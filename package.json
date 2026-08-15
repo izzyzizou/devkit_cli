@@ -14,20 +14,25 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/cli.ts",
     "start": "node dist/cli.js",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test:unit": "vitest run tests/unit",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "files": [
     "dist",
     "bin"
   ],
   "dependencies": {
-    "zx": "^8.1.4",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "zx": "^8.1.4"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.5"
   },
   "engines": {
     "node": ">=18"

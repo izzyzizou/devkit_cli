@@ -14,4 +14,6 @@ export function registerAllCommands(program: Command): void {
   registerTodoFind(program);
   registerFilter(program);
   registerExec(program);
+
+  // TODO: add more commands
 }
