@@ -14,28 +14,144 @@ devkit git:changed | devkit filter '\.ts$' | devkit exec 'eslint {}'
 
 ## Install
 
+Requirements: Node.js 18+ and Git.
+
+From a checkout of this repository:
+
 ```bash
 npm install
 npm run build
-npm link   # optional: makes `devkit` available globally
 ```
 
-Or run without building, via `tsx`:
+Then choose how you want to run the CLI:
 
 ```bash
-npm run dev -- git:changed
+# Run the built CLI directly from this checkout
+npm start -- --help
+
+# Or make `devkit` available globally while you develop it
+npm link
+devkit --help
+```
+
+For source-mode development without rebuilding, use `npm run dev --` followed
+by the command and options:
+
+```bash
+npm run dev -- git:changed --staged
 ```
 
 ## Commands
 
-| Command       | Description                                                              |
-|---------------|---------------------------------------------------------------------------|
-| `git:changed` | List files changed vs a base ref (`--base`, `--staged`)                  |
-| `todo:find`   | Scan files for `TODO`/`FIXME`/`HACK` comments (reads args or stdin)      |
-| `filter`      | Keep piped lines matching a regex (`-v` invert, `-i` ignore case)        |
-| `exec`        | Run a shell template per piped line, `{}` substitutes the line           |
+`devkit` is intentionally small: each command does one thing and keeps stdout
+pipeable for the next command.
+
+| Command       | Input                         | Output                         | Common options                                  |
+|---------------|-------------------------------|--------------------------------|-------------------------------------------------|
+| `git:changed` | current Git repository        | changed file paths, one/line   | `--base <ref>` (default `HEAD`), `--staged`     |
+| `todo:find`   | file args or file paths stdin | TODO/FIXME/HACK hits           | `--json` for structured output                  |
+| `filter`      | stdin lines                   | matching stdin lines           | `-v`/`--invert`, `-i`/`--ignore-case`           |
+| `exec`        | stdin lines                   | command stdout                 | `-p`/`--parallel`; `{}` substitutes each line   |
 
 Run `devkit <command> --help` for full options.
+
+### Command details
+
+#### `git:changed`
+
+Lists files changed in the current repository. By default it compares the
+working tree with `HEAD`; use `--staged` to list only staged paths or
+`--base <ref>` to compare against another ref.
+
+```bash
+devkit git:changed
+devkit git:changed --staged
+devkit git:changed --base main
+```
+
+#### `todo:find`
+
+Scans files for `TODO`, `FIXME`, and `HACK` markers. Pass files explicitly, or
+pipe file names from another command.
+
+```bash
+devkit todo:find src/cli.ts README.md
+devkit git:changed | devkit todo:find
+devkit todo:find --json src/cli.ts
+```
+
+#### `filter`
+
+Keeps only piped lines that match a JavaScript regular expression.
+
+```bash
+devkit git:changed | devkit filter '\.ts$'
+devkit git:changed | devkit filter -i 'readme|license'
+devkit git:changed | devkit filter -v '\.md$'
+```
+
+#### `exec`
+
+Runs a shell command template once for each piped line. Include `{}` where the
+line should be inserted; if omitted, the line is appended to the template.
+
+```bash
+devkit git:changed | devkit exec 'wc -l {}'
+devkit git:changed | devkit filter '\.ts$' | devkit exec 'npx prettier --check {}'
+```
+
+## End-to-end workflow: review changed TODOs before committing
+
+This workflow starts with a Git working tree, narrows the file list, scans for
+work markers, and optionally runs another tool over the same changed files.
+
+1. Install and expose the CLI:
+
+   ```bash
+   npm install
+   npm run build
+   npm link
+   ```
+
+2. In any Git repository, make or stage a change that contains a marker such as:
+
+   ```ts
+   // TODO: replace the placeholder implementation
+   ```
+
+3. See the changed files that `devkit` can compose over:
+
+   ```bash
+   devkit git:changed
+   # or, if you staged the files:
+   devkit git:changed --staged
+   ```
+
+4. Find only TODO/FIXME/HACK markers in changed TypeScript files:
+
+   ```bash
+   devkit git:changed \
+     | devkit filter '\.ts$' \
+     | devkit todo:find
+   ```
+
+   Example output:
+
+   ```text
+   src/example.ts:12: [TODO] replace the placeholder implementation
+   ```
+
+5. Reuse the same changed-file stream with an external command:
+
+   ```bash
+   devkit git:changed \
+     | devkit filter '\.ts$' \
+     | devkit exec 'npx prettier --check {}'
+   ```
+
+Because every command writes data to stdout and status messages to stderr, the
+pipeline remains safe to extend with standard shell tools such as `sort`,
+`uniq`, `tee`, or `xargs`.
 
 ## Testing
 
